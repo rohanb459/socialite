@@ -4,6 +4,7 @@ import axios from 'axios'
 import { UserContext } from "./contexts/UserContext";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
+import Contact from "./Contact";
 
 const Chat = () => {
   const [ws, setWs] = useState(null);
@@ -110,23 +111,22 @@ const Chat = () => {
         <Logo />
 
         {Object.keys(onlinePeopleExclOurUser).map((userId) => (
-          <div
-            key={userId}
-            onClick={() => setSelectedUserId(userId)}
-            className={
-              "border-b border-gray-100  flex items-center gap-2 cursor-pointer " +
-              (userId == selectedUserId ? "bg-blue-200" : "")
-            }
-          >
-            {userId === selectedUserId && (
-              <div className="w-1 bg-blue-500 h-12 rounded-r-md"></div>
-            )}
-            <div className="flex gap-2 py-2 pl-4 items-center">
-              <Avatar online={true} username={onlinePeople[userId]} userId={userId} />
-              <span className="text-gray-800"> {onlinePeople[userId]}</span>
-            </div>
-          </div>
+          <Contact id={userId}
+          key={userId}
+            username={onlinePeopleExclOurUser[userId]}
+            online={true}
+            onClick={()=>setSelectedUserId(userId)}
+            selected = {userId === selectedUserId}/>
         ))}
+        {Object.keys(offLinePeople).map((userId) => (
+          <Contact id={userId}
+          key={userId}
+            username={offLinePeople[userId].username}
+            online={false}
+            onClick={()=>setSelectedUserId(userId)}
+            selected = {userId === selectedUserId}/>
+        ))}
+        
       </div>
       <div className="bg-blue-300 w-2/3 p-2 flex flex-col">
         <div className="flex-grow">
