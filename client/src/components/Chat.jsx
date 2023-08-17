@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
 import { uniqBy } from "lodash";
-import axios from 'axios'
+import axios from "axios";
 import { UserContext } from "./contexts/UserContext";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
@@ -11,7 +11,7 @@ const Chat = () => {
   const [onlinePeople, setOnlinePeople] = useState({});
   const [offLinePeople, setOfflinePeople] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const { username, id } = useContext(UserContext);
+  const { username, id, setId, setUsername } = useContext(UserContext);
   const [newMessageText, setNewMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const divUnderMessages = useRef();
@@ -20,13 +20,12 @@ const Chat = () => {
     connectToWs();
   }, []);
 
-  function connectToWs()
-  {
+  function connectToWs() {
     const ws = new WebSocket("ws://localhost:3000");
     setWs(ws);
     ws.addEventListener("message", handleMessage);
-    ws.addEventListener('close', ()=>{
-      setTimeout(()=>{
+    ws.addEventListener("close", () => {
+      setTimeout(() => {
         console.log("Disconnected, Trying to reconnect...");
         connectToWs();
       }, 1000);
@@ -61,45 +60,53 @@ const Chat = () => {
       })
     );
     setNewMessageText("");
-    setMessages((prev) => [...prev, { 
-      text: newMessageText, 
-      sender: id,
-      recipient: selectedUserId,
-      _id: Date.now(),
-    }]);
-    
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: newMessageText,
+        sender: id,
+        recipient: selectedUserId,
+        _id: Date.now(),
+      },
+    ]);
   }
 
-  useEffect(()=>{
+  function logOut(){
+    axios.post('/logout').then(()=>{
+      setWs(null);
+      setId(null);
+      setUsername(null);
+    });
+    
+  }
+  
+  useEffect(() => {
     const div = divUnderMessages.current;
-    if(div)
-    {
-      div.scrollIntoView({behavior: 'smooth', block:'end'});
+    if (div) {
+      div.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-  },[messages]);
+  }, [messages]);
 
-  useEffect(()=>{
-    axios.get('/people').then(res=>{
+  useEffect(() => {
+    axios.get("/people").then((res) => {
       const offLinePeopleArray = res.data
-      .filter(p=> p._id!==id)
-      .filter(p=>!Object.keys(onlinePeople).includes(p._id));
+        .filter((p) => p._id !== id)
+        .filter((p) => !Object.keys(onlinePeople).includes(p._id));
       const offLinePeople = {};
-      offLinePeopleArray.forEach(p=>{
-        offLinePeople[p._id]=p;
-      })
+      offLinePeopleArray.forEach((p) => {
+        offLinePeople[p._id] = p;
+      });
       setOfflinePeople(offLinePeople);
-    })
-  },[onlinePeople])
+    });
+  }, [onlinePeople]);
 
-  useEffect(()=>{
-    if(selectedUserId)
-    {
-      axios.get('/messages/'+selectedUserId).then(res =>{
+  useEffect(() => {
+    if (selectedUserId) {
+      axios.get("/messages/" + selectedUserId).then((res) => {
         setMessages(res.data);
-      })
-
+      });
     }
-  },[selectedUserId])
+  }, [selectedUserId]);
   const onlinePeopleExclOurUser = { ...onlinePeople };
   delete onlinePeopleExclOurUser[id];
 
@@ -107,26 +114,40 @@ const Chat = () => {
 
   return (
     <div className="flex h-screen">
-      <div className="bg-blue-100 w-1/3">
-        <Logo />
+      <div className="bg-blue-100 w-1/3 flex flex-col">
+        <div className="flex-grow">
+          <Logo />
 
-        {Object.keys(onlinePeopleExclOurUser).map((userId) => (
-          <Contact id={userId}
-          key={userId}
-            username={onlinePeopleExclOurUser[userId]}
-            online={true}
-            onClick={()=>setSelectedUserId(userId)}
-            selected = {userId === selectedUserId}/>
-        ))}
-        {Object.keys(offLinePeople).map((userId) => (
-          <Contact id={userId}
-          key={userId}
-            username={offLinePeople[userId].username}
-            online={false}
-            onClick={()=>setSelectedUserId(userId)}
-            selected = {userId === selectedUserId}/>
-        ))}
-        
+          {Object.keys(onlinePeopleExclOurUser).map((userId) => (
+            <Contact
+              id={userId}
+              key={userId}
+              username={onlinePeopleExclOurUser[userId]}
+              online={true}
+              onClick={() => setSelectedUserId(userId)}
+              selected={userId === selectedUserId}
+            />
+          ))}
+          {Object.keys(offLinePeople).map((userId) => (
+            <Contact
+              id={userId}
+              key={userId}
+              username={offLinePeople[userId].username}
+              online={false}
+              onClick={() => setSelectedUserId(userId)}
+              selected={userId === selectedUserId}
+            />
+          ))}
+        </div>
+        <div className="p-2 text-center flex items-center justify-center">
+        <span className="mr-2 text-sm text-gray-800 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+  <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+</svg>
+
+         {username}</span>
+          <button onClick={logOut} className="text-sm bg-blue-400 py-1 px-2 text-gray-900 border rounded-md">Log Out</button>
+        </div>
       </div>
       <div className="bg-blue-300 w-2/3 p-2 flex flex-col">
         <div className="flex-grow">
@@ -139,18 +160,28 @@ const Chat = () => {
           )}
           {!!selectedUserId && (
             <div className="relative h-full">
-            <div  className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
-              {messagesWithoutDupes.map((message) => (
-                <div className={(message.sender === id? 'text-right': 'text-left')}>
-                <div className={"text-left inline-block p-2 my-2 rounded-md text-sm " +(message.sender === id ?'bg-blue-500 text-white': 'bg-white text-gray-500')}>
-                  {message.text}
-                </div>
-                </div>
-              ))}
-              <div ref={divUnderMessages}></div>
+              <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
+                {messagesWithoutDupes.map((message) => (
+                  <div
+                    className={
+                      message.sender === id ? "text-right" : "text-left"
+                    }
+                  >
+                    <div
+                      className={
+                        "text-left inline-block p-2 my-2 rounded-md text-sm mr-2 " +
+                        (message.sender === id
+                          ? "bg-blue-500 text-white"
+                          : "bg-white text-gray-500")
+                      }
+                    >
+                      {message.text}
+                    </div>
+                  </div>
+                ))}
+                <div ref={divUnderMessages}></div>
+              </div>
             </div>
-            </div>
-            
           )}
         </div>
 

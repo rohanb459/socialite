@@ -111,6 +111,10 @@ app.post('/register', async(req,res)=>{
     }
 })
 
+app.post('/logout', (req,res)=>{
+    res.cookie('token', '', {sameSite:'none', secure:true}).json('ok')
+})
+
 const server = app.listen(3000);      
 
 
@@ -133,6 +137,7 @@ wss.on('connection', (connection, req)=>{
         connection.ping();
         connection.deathtimer = setTimeout(()=>{
             connection.isAlive=false;
+            clearInterval(connection.timer);
             connection.terminate();
             notifyAboutOnlinePeople();
         }, 1000)
