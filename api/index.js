@@ -9,6 +9,7 @@ const ws = require("ws");
 const fs = require("fs");
 const User = require("./models/User");
 const Message = require("./models/Message");
+const PORT = process.env.PORT || 3000;
 dotenv.config();
 mongoose.connect(process.env.MONGO_URL);
 const jwtSecret = process.env.JWT_SECRET;
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://socialite-personal-chat.vercel.app/",
     credentials: true,
     optionsSuccessStatus: 200,
   })
@@ -125,7 +126,7 @@ app.post("/logout", (req, res) => {
   res.cookie("token", "", { sameSite: "none", secure: true }).json("ok");
 });
 
-const server = app.listen(3000);
+const server = app.listen(PORT);
 
 const wss = new ws.WebSocketServer({ server });
 
