@@ -5,6 +5,8 @@ import { UserContext } from "./contexts/UserContext";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import Contact from "./Contact";
+import {fileStorage} from "./Firebase";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 
 const Chat = () => {
   const [ws, setWs] = useState(null);
@@ -42,7 +44,6 @@ const Chat = () => {
 
   function handleMessage(ev) {
     const messageData = JSON.parse(ev.data);
-    console.log({ ev, messageData });
     if ("online" in messageData) {
       showOnlinePeople(messageData.online);
     } else if ("text" in messageData) {
@@ -55,7 +56,6 @@ const Chat = () => {
 
   function sendMessage(e, file=null) {
     if(e)e.preventDefault();
-
     ws.send(
       JSON.stringify({
         recipient: selectedUserId,
@@ -78,6 +78,8 @@ const Chat = () => {
           text: newMessageText,
           sender: id,
           recipient: selectedUserId,
+          fileName: file? file.name: null,
+          fileUrl: file?file.url: null,
           _id: Date.now(),
         },
       ]);
@@ -121,16 +123,35 @@ const Chat = () => {
     }
   }, [selectedUserId]);
 
-  function sendFile(ev)
-  {
-    const reader = new FileReader();
-    reader.readAsDataURL(ev.target.files[0]);
-    reader.onload = () =>{
-      sendMessage(null, {
-        name: ev.target.files[0].name,
-        data: reader.result
-      })
-    }
+  // function sendFile(ev)
+  // {
+  //   const reader = new FileReader();
+  //   reader.readAsDataURL(ev.target.files[0]);
+  //   reader.onload = () =>{
+  //     sendMessage(null, {
+  //       name: ev.target.files[0].name,
+  //       data: reader.result
+  //     })
+  //   }
+  // }
+
+  function sendImage (e){
+    e.preventDefault();
+
+    const file = e.target?.files[0];
+
+    if(!file){
+      return;
+    };
+    const storageRef = ref(fileStorage, `/${file.name}`);
+    uploadBytes(storageRef, file).then((snapshot)=>{
+      getDownloadURL(snapshot.ref).then((url)=>{
+        sendMessage(null, {
+          name: file.name,
+          url: url
+        })
+      });
+    });
   }
   const onlinePeopleExclOurUser = { ...onlinePeople };
   delete onlinePeopleExclOurUser[id];
@@ -201,13 +222,13 @@ const Chat = () => {
                       }
                     >
                       {message.text}
-                      {message.file && (
+                      {message.fileName && (
                         <div className="">
-                          <a target="_blank" className="flex items-center gap-1 border-b" href={axios.defaults.baseURL + '/uploads/' + message.file}>
+                          <a target="_blank" className="flex items-center gap-1 border-b" href={message.fileUrl}>
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
   <path fill-rule="evenodd" d="M18.97 3.659a2.25 2.25 0 00-3.182 0l-10.94 10.94a3.75 3.75 0 105.304 5.303l7.693-7.693a.75.75 0 011.06 1.06l-7.693 7.693a5.25 5.25 0 11-7.424-7.424l10.939-10.94a3.75 3.75 0 115.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 015.91 15.66l7.81-7.81a.75.75 0 011.061 1.06l-7.81 7.81a.75.75 0 001.054 1.068L18.97 6.84a2.25 2.25 0 000-3.182z" clip-rule="evenodd" />
 </svg>
-                            {message.file}
+                            {message.fileName}
                           </a>
 
                         </div>
@@ -231,7 +252,7 @@ const Chat = () => {
               className="bg-white flex-grow border p-2 rounded-md"
             />
             <label className=" cursor-pointer bg-blue-400 rounded-md p-2 text-gray-800 border border-blue-500">
-            <input type="file" className="hidden" onChange={sendFile} />
+            <input type="file" className="hidden" onChange={sendImage} />
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
   <path fill-rule="evenodd" d="M18.97 3.659a2.25 2.25 0 00-3.182 0l-10.94 10.94a3.75 3.75 0 105.304 5.303l7.693-7.693a.75.75 0 011.06 1.06l-7.693 7.693a5.25 5.25 0 11-7.424-7.424l10.939-10.94a3.75 3.75 0 115.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 015.91 15.66l7.81-7.81a.75.75 0 011.061 1.06l-7.81 7.81a.75.75 0 001.054 1.068L18.97 6.84a2.25 2.25 0 000-3.182z" clip-rule="evenodd" />
 </svg>

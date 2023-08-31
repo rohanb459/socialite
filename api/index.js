@@ -15,7 +15,6 @@ const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
 const app = express();
-app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -182,25 +181,28 @@ wss.on("connection", (connection, req) => {
   connection.on("message", async (message) => {
     const messageData = JSON.parse(message.toString());
     const { recipient, text, file } = messageData;
-    let filename = null;
-    if (file) {
-      const parts = file.name.split(".");
-      const ext = parts[parts.length - 1];
-      filename = Date.now() + "." + ext;
-      const path = __dirname + "/uploads/" + filename;
 
-      const bufferData = new Buffer(file.data.split(',')[1], "base64");
-      fs.writeFile(path, bufferData, () => {
-        console.log("file saved:" + path);
-      });
-    }
+    console.log(file);
+    let filename = null;
+    // if (file) {
+    //   const parts = file.name.split(".");
+    //   const ext = parts[parts.length - 1];
+    //   filename = Date.now() + "." + ext;
+    //   const path = __dirname + "/uploads/" + filename;
+
+    //   const bufferData = new Buffer(file.data.split(',')[1], "base64");
+    //   fs.writeFile(path, bufferData, () => {
+    //     console.log("file saved:" + path);
+    //   });
+    // }
 
     if (recipient && (text || file)) {
       const messageDoc = await Message.create({
         sender: connection.userId,
         recipient,
         text,
-        file: file ? filename : null,
+        fileName: file ? file.name : null,
+        fileUrl: file ? file.url : null,
       });
       [...wss.clients]
         .filter((c) => c.userId === recipient)
@@ -210,7 +212,8 @@ wss.on("connection", (connection, req) => {
               text,
               recipient,
               sender: connection.userId,
-              file: file ? filename : null,
+              fileName: file ? file.name : null,
+              fileUrl: file ? file.url : null,
               _id: messageDoc._id,
             })
           )
