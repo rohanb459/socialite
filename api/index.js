@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://socialite-personal-chat.vercel.app",
+    origin: "*",
     credentials: true,
     optionsSuccessStatus: 200,
   })
