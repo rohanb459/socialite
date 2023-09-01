@@ -129,7 +129,7 @@ app.post("/logout", (req, res) => {
 
 const server = app.listen(PORT);
 
-const wss = new ws.WebSocketServer({ server });
+const wss = new ws.WebSocketServer({ port: PORT });
 
 wss.on("connection", (connection, req) => {
   function notifyAboutOnlinePeople() {

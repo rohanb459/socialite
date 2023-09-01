@@ -23,7 +23,7 @@ const Chat = () => {
   }, []);
 
   function connectToWs() {
-    const ws = new WebSocket("https://socialite-api.onrender.com");
+    const ws = new WebSocket("wss://socialite-api.onrender.com");
     setWs(ws);
     ws.addEventListener("message", handleMessage);
     ws.addEventListener("close", () => {
