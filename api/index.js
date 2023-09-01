@@ -19,7 +19,9 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(
-  cors()
+  cors({
+    origin: "https://socialite-personal-chat.vercel.app",
+  })
 );
 
 async function getUserDataFromRequest(req) {
