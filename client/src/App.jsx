@@ -3,7 +3,7 @@ import {UserContextProvider } from "./components/contexts/UserContext";
 import Routes from "./Routes";
 
 function App() {
-  axios.defaults.baseURL = 'https://socialite-server-rjzbn8nt0-rohanb459.vercel.app/';
+  axios.defaults.baseURL = '*';
   axios.defaults.withCredentials = true;
 
   return (
